@@ -1,26 +1,31 @@
-// Initial Data Structure
-const bills = [
+let bills = [
     { name: "Rent", amount: 1200, dueDate: 15, isAutoPay: true, isPaid: false },
     { name: "Electric", amount: 150, dueDate: 18, isAutoPay: false, isPaid: false },
     { name: "Internet", amount: 80, dueDate: 22, isAutoPay: true, isPaid: false }
 ];
 
-// 1. Load data as soon as the script runs
-loadFromPhone();
+const startPayday = new Date(2026, 2, 12); // March 12, 2026
+
+function loadFromPhone() {
+    const saved = localStorage.getItem('wolfBills');
+    if (saved) bills = JSON.parse(saved);
+}
 
 function saveToPhone() {
     localStorage.setItem('wolfBills', JSON.stringify(bills));
 }
 
-function loadFromPhone() {
-    const saved = localStorage.getItem('wolfBills');
-    if (saved) {
-        const parsed = JSON.parse(saved);
-        // Sync the 'isPaid' status from storage to our active array
-        parsed.forEach((savedBill, i) => {
-            if(bills[i]) bills[i].isPaid = savedBill.isPaid;
-        });
-    }
+// UI Update Functions
+function updateAmount(index, val) {
+    bills[index].amount = parseFloat(val) || 0;
+    saveToPhone();
+    renderApp();
+}
+
+function toggleAuto(index) {
+    bills[index].isAutoPay = !bills[index].isAutoPay;
+    saveToPhone();
+    renderApp();
 }
 
 function togglePaid(index) {
@@ -29,40 +34,66 @@ function togglePaid(index) {
     renderApp();
 }
 
-function calculate() {
-    const income = document.getElementById('paycheck').value || 0;
-    const totalBills = bills.reduce((sum, b) => sum + b.amount, 0);
-    document.getElementById('remaining').innerText = `Remaining: $${(income - totalBills).toFixed(2)}`;
-}
-
 function renderApp() {
+    loadFromPhone();
     const list = document.getElementById('billList');
-    if (!list) return;
+    list.innerHTML = '';
 
-    list.innerHTML = ''; // Clear current list
+    // Logic for 2 periods
+    const periods = [
+        { name: "Current Period", start: new Date(startPayday), end: new Date(startPayday.getTime() + 13 * 24 * 60 * 60 * 1000) },
+        { name: "Next Period", start: new Date(startPayday.getTime() + 14 * 24 * 60 * 60 * 1000), end: new Date(startPayday.getTime() + 27 * 24 * 60 * 60 * 1000) }
+    ];
 
-    bills.forEach((bill, index) => {
-        const item = document.createElement('div');
-        item.className = 'bill-item';
-        item.innerHTML = `
-            <div style="display: flex; align-items: center;">
-                <input type="checkbox" ${bill.isPaid ? 'checked' : ''} onchange="togglePaid(${index})">
-                <div style="margin-left: 10px;">
-                    <div style="${bill.isPaid ? 'text-decoration: line-through; color: #888;' : ''}">
-                        **${bill.name}** - Due: ${bill.dueDate}th
+    periods.forEach(period => {
+        const section = document.createElement('div');
+        section.innerHTML = `<h3 style="color: #aaa; margin-top: 20px;">${period.name} (${period.start.getMonth()+1}/${period.start.getDate()} - ${period.end.getMonth()+1}/${period.end.getDate()})</h3>`;
+        
+        let periodTotal = 0;
+
+        bills.forEach((bill, index) => {
+            // Check if bill due date falls in this 14-day window (simplified for 1 month view)
+            const billDate = bill.dueDate;
+            const startDay = period.start.getDate();
+            const endDay = period.end.getDate();
+
+            // Check if bill falls in this window (Assumes bills are monthly)
+            if (billDate >= startDay && billDate <= endDay) {
+                periodTotal += bill.amount;
+                const item = document.createElement('div');
+                item.className = 'bill-item';
+                item.innerHTML = `
+                    <div style="display: flex; align-items: center; flex: 1;">
+                        <input type="checkbox" ${bill.isPaid ? 'checked' : ''} onchange="togglePaid(${index})">
+                        <div style="margin-left: 10px;">
+                            <div style="${bill.isPaid ? 'text-decoration: line-through; color: #888;' : ''}">
+                                **${bill.name}**
+                            </div>
+                            <button onclick="toggleAuto(${index})" class="tag ${bill.isAutoPay ? 'auto' : 'manual'}" style="border:none; cursor:pointer;">
+                                ${bill.isAutoPay ? 'AUTO-PAY' : 'MANUAL'}
+                            </button>
+                        </div>
                     </div>
-                    <small style="color: ${bill.isAutoPay ? '#4caf50' : '#2196f3'}">
-                        ${bill.isAutoPay ? 'AUTO-PAY' : 'MANUAL'}
-                    </small>
-                </div>
-            </div>
-            <span>$${bill.amount}</span>
-        `;
-        list.appendChild(item);
+                    <div style="display: flex; align-items: center;">
+                        $<input type="number" value="${bill.amount}" onchange="updateAmount(${index}, this.value)" 
+                            style="width: 70px; background: #333; color: white; border: 1px solid #444; border-radius: 4px; padding: 5px; margin-left: 10px;">
+                    </div>
+                `;
+                section.appendChild(item);
+            }
+        });
+
+        list.appendChild(section);
     });
 
-    calculateRemaining();
+    calculate();
 }
 
-// Initial render
+function calculate() {
+    const income = document.getElementById('paycheck').value || 0;
+    // Calculation logic for Current period only
+    const currentTotal = bills.filter(b => b.dueDate >= 12 && b.dueDate <= 25).reduce((s, b) => s + b.amount, 0);
+    document.getElementById('remaining').innerText = `Remaining (Current): $${(income - currentTotal).toFixed(2)}`;
+}
+
 document.addEventListener('DOMContentLoaded', renderApp);
