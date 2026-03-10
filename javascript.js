@@ -30,70 +30,87 @@ function updateAmount(index, newAmount) {
     renderApp(); // Rerender to update the "Remaining" math
 }
 
+function loadFromPhone() {
+    const saved = localStorage.getItem('wolfBills');
+    if (saved) {
+        try {
+            const parsed = JSON.parse(saved);
+            // If the saved list is empty or completely different, overwrite it with your hardcoded list
+            if (parsed.length === 0 || (parsed.length !== bills.length && !localStorage.getItem('forceUpdate'))) {
+                saveToPhone();
+            } else {
+                bills = parsed;
+            }
+        } catch (e) {
+            console.error("Error loading data", e);
+            saveToPhone();
+        }
+    }
+}
+
 function renderApp() {
+    // 1. Load the data FIRST
     loadFromPhone();
+    
     const list = document.getElementById('billList');
+    if (!list) return; // Safety check
     list.innerHTML = '';
 
-    // Add Savings Goal Card at the top of the list
-    const savingsCard = document.createElement('div');
-    savingsCard.className = 'card';
-    savingsCard.style.borderLeft = "5px solid #ff9800";
-    savingsCard.innerHTML = `
-        <div style="font-size: 0.9em; color: #ff9800;">Spring Tax Goal (Due May 1)</div>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
-            <span>Save this check:</span>
-            <span style="font-weight: bold; font-size: 1.2em;">$${taxPerCheck}</span>
-        </div>
-    `;
-    list.appendChild(savingsCard);
-
+    // 2. Define the periods
     const periods = [
-        { name: "Current Period (3/12 - 3/25)", start: new Date(2026, 2, 12), end: new Date(2026, 2, 25) },
-        { name: "Next Period (3/26 - 4/8)", start: new Date(2026, 2, 26), end: new Date(2026, 3, 8) }
+        { name: "Current Period", start: new Date(2026, 2, 12), end: new Date(2026, 2, 25) },
+        { name: "Next Period", start: new Date(2026, 2, 26), end: new Date(2026, 3, 8) }
     ];
 
+    // 3. Render the periods
     periods.forEach(period => {
         const section = document.createElement('div');
-        section.innerHTML = `<h3 style="color: #00e5ff; margin-top: 20px;">${period.name}</h3>`;
+        section.innerHTML = `<h3 style="color: #00e5ff; border-bottom: 1px solid #333; padding: 10px 0;">${period.name}</h3>`;
         
+        let hasBills = false;
+
         bills.forEach((bill, index) => {
-            let showBill = false;
             const startDay = period.start.getDate();
             const endDay = period.end.getDate();
             const startMonth = period.start.getMonth();
             const endMonth = period.end.getMonth();
 
-            if (bill.everyPaycheck) showBill = true;
-            else if (startMonth === endMonth) {
-                if (bill.dueDate >= startDay && bill.dueDate <= endDay) showBill = true;
+            let showBill = false;
+            
+            if (bill.everyPaycheck) {
+                showBill = true;
+            } else if (bill.dueMonth !== undefined) {
+                if (bill.dueMonth === period.start.getMonth() && bill.dueDate >= startDay) showBill = true;
             } else {
-                if (bill.dueDate >= startDay || bill.dueDate <= endDay) showBill = true;
+                if (startMonth === endMonth) {
+                    if (bill.dueDate >= startDay && bill.dueDate <= endDay) showBill = true;
+                } else {
+                    if (bill.dueDate >= startDay || bill.dueDate <= endDay) showBill = true;
+                }
             }
 
-            if (showBill && bill.dueMonth === undefined) { // Exclude seasonal taxes from regular list
+            if (showBill) {
+                hasBills = true;
                 const item = document.createElement('div');
                 item.className = 'bill-item';
+                const displayDate = bill.everyPaycheck ? "Every Pay" : `Due: ${bill.dueDate}${getOrdinal(bill.dueDate)}`;
+                
                 item.innerHTML = `
                     <div style="flex: 1;">
                         <input type="checkbox" ${bill.isPaid ? 'checked' : ''} onchange="togglePaid(${index})">
-                        <span style="font-weight: bold; margin-left: 8px;">${bill.name}</span>
-                        <div style="font-size: 0.7em; margin-left: 28px; color: #888;">Due: ${bill.dueDate}th</div>
+                        <span style="font-weight: bold; margin-left: 8px; ${bill.isPaid ? 'text-decoration: line-through; color: #666;' : ''}">${bill.name}</span>
+                        <div style="font-size: 0.8em; margin-left: 28px; color: #aaa;">${displayDate}</div>
                     </div>
-                    <div style="display: flex; flex-direction: column; align-items: flex-end;">
-                        <span style="font-size: 0.6em; margin-bottom: 2px;" class="tag ${bill.isAutoPay ? 'auto' : 'manual'}">${bill.isAutoPay ? 'AUTO' : 'MANUAL'}</span>
-                        <div style="display: flex; align-items: center;">
-                            <span style="font-size: 0.9em; margin-right: 4px;">$</span>
-                            <input type="number" step="0.01" value="${bill.amount}" 
-                                onchange="updateAmount(${index}, this.value)" 
-                                style="width: 80px; background: #333; color: white; border: 1px solid #444; border-radius: 4px; padding: 4px; text-align: right;">
-                        </div>
+                    <div style="text-align: right;">
+                        <span style="font-size: 0.8em; color: ${bill.isAutoPay ? '#4caf50' : '#2196f3'}">${bill.isAutoPay ? 'AUTO' : 'MANUAL'}</span>
+                        <div style="font-weight: bold;">$${bill.amount}</div>
                     </div>
                 `;
                 section.appendChild(item);
             }
         });
-        list.appendChild(section);
+        
+        if (hasBills) list.appendChild(section);
     });
     calculate();
 }
