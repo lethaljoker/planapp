@@ -120,3 +120,21 @@ function calculate() {
 }
 
 document.addEventListener('DOMContentLoaded', renderApp);
+
+function addNewBill() {
+    const name = prompt("Bill Name:");
+    const amount = parseFloat(prompt("Amount:"));
+    const date = parseInt(prompt("Due Date (Day of month):"));
+    
+    if (name && amount && date) {
+        bills.push({
+            name: name,
+            amount: amount,
+            dueDate: date,
+            isAutoPay: false,
+            isPaid: false
+        });
+        saveToPhone();
+        renderApp();
+    }
+}
