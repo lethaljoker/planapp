@@ -1,19 +1,19 @@
 let bills = [
     { name: "Rent", amount: 1200, dueDate: 15, isAutoPay: true, isPaid: false },
     { name: "Electric", amount: 150, dueDate: 18, isAutoPay: false, isPaid: false },
-    { name: "Xfinity-Internet", amount: 80, dueDate: 22, isAutoPay: true, isPaid: false }
-    { name: "Xfinity-Phone", amount: 80, dueDate: 22, isAutoPay: true, isPaid: false }
-    { name: "Direct Auto", amount: 80, dueDate: 22, isAutoPay: true, isPaid: false }
-    { name: "Water", amount: 80, dueDate: 22, isAutoPay: true, isPaid: false }
-    { name: "Water-Taxes", amount: 80, dueDate: 22, isAutoPay: true, isPaid: false }
-    { name: "Renters Insure", amount: 80, dueDate: 22, isAutoPay: true, isPaid: false }
-    { name: "Phone-Tmobile", amount: 80, dueDate: 22, isAutoPay: true, isPaid: false }
-    { name: "Amazon-Prime", amount: 80, dueDate: 22, isAutoPay: true, isPaid: false }
-    { name: "Rent A Center", amount: 80, dueDate: 22, isAutoPay: true, isPaid: false }
-    { name: "Ally Card", amount: 80, dueDate: 22, isAutoPay: true, isPaid: false }
-    { name: "Avant Card", amount: 80, dueDate: 22, isAutoPay: true, isPaid: false }
-    { name: "CapitalOne Card", amount: 80, dueDate: 22, isAutoPay: true, isPaid: false }
-    { name: "MissionLane Card", amount: 80, dueDate: 22, isAutoPay: true, isPaid: false }
+    { name: "Xfinity-Internet", amount: 80, dueDate: 22, isAutoPay: true, isPaid: false },
+    { name: "Xfinity-Phone", amount: 80, dueDate: 22, isAutoPay: true, isPaid: false },
+    { name: "Direct Auto", amount: 80, dueDate: 22, isAutoPay: true, isPaid: false },
+    { name: "Water", amount: 80, dueDate: 22, isAutoPay: true, isPaid: false },
+    { name: "Water-Taxes", amount: 80, dueDate: 22, isAutoPay: true, isPaid: false },
+    { name: "Renters Insure", amount: 80, dueDate: 22, isAutoPay: true, isPaid: false },
+    { name: "Phone-Tmobile", amount: 80, dueDate: 22, isAutoPay: true, isPaid: false },
+    { name: "Amazon-Prime", amount: 80, dueDate: 22, isAutoPay: true, isPaid: false },
+    { name: "Rent A Center", amount: 80, dueDate: 22, isAutoPay: true, isPaid: false },
+    { name: "Ally Card", amount: 80, dueDate: 22, isAutoPay: true, isPaid: false },
+    { name: "Avant Card", amount: 80, dueDate: 22, isAutoPay: true, isPaid: false },
+    { name: "CapitalOne Card", amount: 80, dueDate: 22, isAutoPay: true, isPaid: false },
+    { name: "MissionLane Card", amount: 80, dueDate: 22, isAutoPay: true, isPaid: false },
     { name: "OnePay Card", amount: 80, dueDate: 22, isAutoPay: true, isPaid: false }
 ];
 
