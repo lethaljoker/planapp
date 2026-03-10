@@ -24,10 +24,18 @@ const taxGoal = 462.99;
 const paychecksUntilTax = 4;
 const taxPerCheck = (taxGoal / paychecksUntilTax).toFixed(2);
 
-function updateAmount(index, newAmount) {
-    bills[index].amount = parseFloat(newAmount) || 0;
+// Function to handle price changes
+function updateAmount(index, val) {
+    bills[index].amount = parseFloat(val) || 0;
     saveToPhone();
-    renderApp(); // Rerender to update the "Remaining" math
+    calculate(); // Update the "Safe to Spend" immediately
+}
+
+// Function to toggle between Auto and Manual
+function toggleAuto(index) {
+    bills[index].isAutoPay = !bills[index].isAutoPay;
+    saveToPhone();
+    renderApp(); // Rerender to show the color change
 }
 
 function loadFromPhone() {
@@ -49,20 +57,16 @@ function loadFromPhone() {
 }
 
 function renderApp() {
-    // 1. Load the data FIRST
     loadFromPhone();
-    
     const list = document.getElementById('billList');
-    if (!list) return; // Safety check
+    if (!list) return;
     list.innerHTML = '';
 
-    // 2. Define the periods
     const periods = [
         { name: "Current Period", start: new Date(2026, 2, 12), end: new Date(2026, 2, 25) },
         { name: "Next Period", start: new Date(2026, 2, 26), end: new Date(2026, 3, 8) }
     ];
 
-    // 3. Render the periods
     periods.forEach(period => {
         const section = document.createElement('div');
         section.innerHTML = `<h3 style="color: #00e5ff; border-bottom: 1px solid #333; padding: 10px 0;">${period.name}</h3>`;
@@ -101,9 +105,17 @@ function renderApp() {
                         <span style="font-weight: bold; margin-left: 8px; ${bill.isPaid ? 'text-decoration: line-through; color: #666;' : ''}">${bill.name}</span>
                         <div style="font-size: 0.8em; margin-left: 28px; color: #aaa;">${displayDate}</div>
                     </div>
-                    <div style="text-align: right;">
-                        <span style="font-size: 0.8em; color: ${bill.isAutoPay ? '#4caf50' : '#2196f3'}">${bill.isAutoPay ? 'AUTO' : 'MANUAL'}</span>
-                        <div style="font-weight: bold;">$${bill.amount}</div>
+                    <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end;">
+                        <button onclick="toggleAuto(${index})" 
+                                style="border: none; border-radius: 4px; padding: 2px 6px; font-size: 0.7em; cursor: pointer; color: white; background: ${bill.isAutoPay ? '#4caf50' : '#2196f3'}">
+                            ${bill.isAutoPay ? 'AUTO' : 'MANUAL'}
+                        </button>
+                        
+                        <div style="margin-top: 5px; font-weight: bold;">
+                            $<input type="number" step="0.01" value="${bill.amount}" 
+                                   onchange="updateAmount(${index}, this.value)"
+                                   style="width: 70px; background: #333; color: white; border: 1px solid #444; border-radius: 4px; padding: 2px; text-align: right; font-weight: bold;">
+                        </div>
                     </div>
                 `;
                 section.appendChild(item);
