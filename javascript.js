@@ -21,7 +21,17 @@ const startPayday = new Date(2026, 2, 12); // March 12, 2026
 
 function loadFromPhone() {
     const saved = localStorage.getItem('wolfBills');
-    if (saved) bills = JSON.parse(saved);
+    if (saved) {
+        const parsed = JSON.parse(saved);
+        // If the number of bills in the code is different than saved, 
+        // we keep the new bills but keep the 'paid' status of the old ones.
+        if (parsed.length !== bills.length) {
+            console.log("New bills detected, updating storage...");
+            saveToPhone(); // Overwrite old memory with your new full list
+        } else {
+            bills = parsed;
+        }
+    }
 }
 
 function saveToPhone() {
