@@ -13,9 +13,20 @@
         .bill-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #333; }
         .paid { text-decoration: line-through; color: #888; }
         input[type="number"] { width: 100%; padding: 10px; margin-top: 10px; border-radius: 5px; border: none; }
-        .tag { font-size: 0.7em; padding: 2px 5px; border-radius: 3px; margin-left: 5px; }
-        .auto { background: #4caf50; }
-        .manual { background: #2196f3; }
+        .tag { 
+    font-size: 0.7em; 
+    padding: 4px 8px; 
+    border-radius: 5px; 
+    margin-top: 4px;
+    display: inline-block;
+    color: white;
+}
+        .auto { background: #2e7d32; } /* Darker green */
+        .manual { background: #1565c0; } /* Darker blue */
+
+input[type="number"]::-webkit-inner-spin-button {
+    display: none; /* Hides arrows on mobile to save space */
+}
     </style>
 </head>
 <body>
