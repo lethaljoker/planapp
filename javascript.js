@@ -129,16 +129,35 @@ function renderApp() {
 
 function calculate() {
     const income = parseFloat(document.getElementById('paycheck').value) || 0;
-    const taxSavings = (462.99 / 4); // Saving for May taxes
+    const taxSavings = (462.99 / 4); // Still subtracting your tax savings goal
     
-    // Calculate current period total (Mar 12 - Mar 25)
-    const currentTotal = bills.filter(b => (b.everyPaycheck || (b.dueDate >= 12 && b.dueDate <= 25)) && b.dueMonth === undefined)
-                              .reduce((s, b) => s + b.amount, 0);
+    // 1. Filter bills for the CURRENT period (Mar 12 - Mar 25)
+    const currentPeriodBills = bills.filter(b => 
+        (b.everyPaycheck || (b.dueDate >= 12 && b.dueDate <= 25)) && b.dueMonth === undefined
+    );
 
-    const safeToSpend = income - currentTotal - taxSavings;
+    // 2. Only subtract the bills that are actually CHECKED (Paid)
+    const totalPaid = currentPeriodBills
+        .filter(b => b.isPaid === true)
+        .reduce((sum, b) => sum + b.amount, 0);
+
+    // 3. Calculate how much is left to pay (Unchecked bills)
+    const totalUnpaid = currentPeriodBills
+        .filter(b => b.isPaid === false)
+        .reduce((sum, b) => sum + b.amount, 0);
+
+    // Your "Safe to Spend" now acts like a real-time bank balance tracker
+    const safeToSpend = income - totalPaid - taxSavings;
+    
     const el = document.getElementById('remaining');
-    el.innerText = `Safe to Spend: $${safeToSpend.toFixed(2)}`;
-    el.style.color = safeToSpend < 0 ? "#ff5252" : "#4caf50";
+    el.innerHTML = `
+        <div style="font-size: 1.2em; color: ${safeToSpend < 0 ? "#ff5252" : "#4caf50"};">
+            Current Balance: $${safeToSpend.toFixed(2)}
+        </div>
+        <div style="font-size: 0.8em; color: #aaa; margin-top: 5px;">
+            Left to Pay: $${totalUnpaid.toFixed(2)}
+        </div>
+    `;
 }
 
 document.addEventListener('DOMContentLoaded', renderApp);
