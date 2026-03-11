@@ -37,8 +37,6 @@ function loadFromPhone() {
     if (savedBills) bills = JSON.parse(savedBills);
     if (savedSavings) savings = JSON.parse(savedSavings);
 }
-    }
-}
 
 function updateAmount(index, val) {
     bills[index].amount = parseFloat(val) || 0;
