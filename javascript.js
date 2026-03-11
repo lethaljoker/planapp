@@ -19,9 +19,9 @@ let bills = [
 ];
 
 let savings = {
-    springSaved: 0, // This is your running total
+    springSaved: 0, 
     fallSaved: 0,
-    currentSpringContribution: 115.75 // Default for this check
+    currentContribution: 115.75 // Changed from currentSpringContribution
 };
 
 // Update your saveToPhone to include this
@@ -135,6 +135,7 @@ function renderApp() {
 
 function calculate() {
     const income = parseFloat(document.getElementById('paycheck').value) || 0;
+    const taxContribution = parseFloat(savings.currentContribution) || 0;
     
     // 1. Get all bills for the Current Period (Mar 12 - Mar 25)
     const currentPeriodBills = bills.filter(b => 
@@ -146,11 +147,11 @@ function calculate() {
     
     // MATH:
     // Safe to Spend = Income - All Bills - Savings Contribution
-    const safeToSpend = income - totalPeriodCost - savings.currentContribution;
+    const safeToSpend = income - totalPeriodCost - taxContribution;
     
     // Bank Balance = Income - What you've actually CHECKED as paid - Savings Contribution
-    const bankBalance = income - amountPaid - savings.currentContribution;
-
+    const bankBalance = income - amountPaid - taxContribution;
+    
     const el = document.getElementById('remaining');
     el.style.display = "flex";
     el.style.flexDirection = "column"; 
