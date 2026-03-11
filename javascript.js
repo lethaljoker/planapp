@@ -18,17 +18,25 @@ let bills = [
     { name: "House Taxes (Spring)", amount: 462.99, dueDate: 1, dueMonth: 4, isAutoPay: false, isPaid: false }
 ];
 
+let savings = {
+    springSaved: 0, // This is your running total
+    fallSaved: 0,
+    currentSpringContribution: 115.75 // Default for this check
+};
+
+// Update your saveToPhone to include this
 function saveToPhone() {
     localStorage.setItem('wolfBills', JSON.stringify(bills));
+    localStorage.setItem('wolfSavings', JSON.stringify(savings));
 }
 
+// Update your loadFromPhone
 function loadFromPhone() {
-    const saved = localStorage.getItem('wolfBills');
-    if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.length === bills.length) {
-            bills = parsed;
-        }
+    const savedBills = localStorage.getItem('wolfBills');
+    const savedSavings = localStorage.getItem('wolfSavings');
+    if (savedBills) bills = JSON.parse(savedBills);
+    if (savedSavings) savings = JSON.parse(savedSavings);
+}
     }
 }
 
@@ -129,40 +137,66 @@ function renderApp() {
 
 function calculate() {
     const income = parseFloat(document.getElementById('paycheck').value) || 0;
-    const taxSavings = 115.75; // Your Spring Tax slice
     
-    // 1. Get ALL bills for the current period
     const currentPeriodBills = bills.filter(b => 
         (b.everyPaycheck || (b.dueDate >= 12 && b.dueDate <= 25)) && b.dueMonth === undefined
     );
 
-    // 2. Total cost of all bills in this window
     const totalPeriodCost = currentPeriodBills.reduce((sum, b) => sum + b.amount, 0);
-
-    // 3. Amount currently paid (checked)
-    const amountPaid = currentPeriodBills
-        .filter(b => b.isPaid)
-        .reduce((sum, b) => sum + b.amount, 0);
-
-    // This matches your Google Sheet "Yellow Bar"
-    // It's the total income minus everything you KNOW you have to pay
-    const leftToSpend = income - totalPeriodCost - taxSavings;
     
-    // This is how much you actually have in the bank right now (Income - what you actually sent)
-    const bankBalance = income - amountPaid - taxSavings;
+    // Math for Safe to Spend (Income - All Period Bills - What you manually typed for taxes)
+    const leftToSpend = income - totalPeriodCost - savings.currentSpringContribution;
 
     const el = document.getElementById('remaining');
+    el.style.display = "flex";
+    el.style.justifyContent = "space-between";
+    el.style.gap = "15px";
+
     el.innerHTML = `
-        <div style="font-size: 1.2em; color: ${leftToSpend < 0 ? "#ff5252" : "#4caf50"};">
-            Safe to Spend: $${leftToSpend.toFixed(2)}
+        <div style="flex: 1;">
+            <div style="font-size: 1.2em; color: ${leftToSpend < 0 ? "#ff5252" : "#4caf50"}; font-weight: bold;">
+                Safe to Spend: $${leftToSpend.toFixed(2)}
+            </div>
+            <div style="font-size: 0.8em; color: #aaa; margin-top: 5px;">Total Period Bills: $${totalPeriodCost.toFixed(2)}</div>
         </div>
-        <div style="font-size: 0.8em; color: #aaa; margin-top: 5px;">
-            Bank Balance: $${bankBalance.toFixed(2)}
-        </div>
-        <div style="font-size: 0.8em; color: #888;">
-            Total Period Bills: $${totalPeriodCost.toFixed(2)}
+
+        <div style="flex: 1; background: #252525; padding: 10px; border-radius: 8px; border-left: 3px solid #ff9800;">
+            <div style="font-size: 0.75em; color: #ff9800; font-weight: bold; margin-bottom: 5px;">TAX SAVINGS</div>
+            
+            <div style="display: flex; flex-direction: column; gap: 5px;">
+                <div style="font-size: 0.7em; display: flex; justify-content: space-between;">
+                    <span>Spring (May 1):</span>
+                    <span>$${savings.springSaved} / $462.99</span>
+                </div>
+                
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <label style="font-size: 0.7em;">Save This Check:</label>
+                    <input type="number" value="${savings.currentSpringContribution}" 
+                        onchange="updateTaxContribution(this.value)"
+                        style="width: 60px; background: #333; color: #fff; border: 1px solid #555; font-size: 0.8em; text-align: right; border-radius: 4px;">
+                </div>
+
+                <button onclick="commitSavings()" style="background: #ff9800; border: none; color: #000; font-size: 0.7em; font-weight: bold; padding: 4px; border-radius: 4px; margin-top: 5px; cursor: pointer;">
+                    Confirm Savings (Add to Total)
+                </button>
+            </div>
         </div>
     `;
+}
+
+// Helper functions for the Tax Tracker
+function updateTaxContribution(val) {
+    savings.currentSpringContribution = parseFloat(val) || 0;
+    saveToPhone();
+    calculate();
+}
+
+function commitSavings() {
+    if(confirm(`Adding $${savings.currentSpringContribution} to your Spring Tax total. Proceed?`)) {
+        savings.springSaved += savings.currentSpringContribution;
+        saveToPhone();
+        renderApp();
+    }
 }
 
 document.addEventListener('DOMContentLoaded', renderApp);
