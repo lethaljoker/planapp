@@ -129,33 +129,38 @@ function renderApp() {
 
 function calculate() {
     const income = parseFloat(document.getElementById('paycheck').value) || 0;
-    const taxSavings = (462.99 / 4); // Still subtracting your tax savings goal
+    const taxSavings = 115.75; // Your Spring Tax slice
     
-    // 1. Filter bills for the CURRENT period (Mar 12 - Mar 25)
+    // 1. Get ALL bills for the current period
     const currentPeriodBills = bills.filter(b => 
         (b.everyPaycheck || (b.dueDate >= 12 && b.dueDate <= 25)) && b.dueMonth === undefined
     );
 
-    // 2. Only subtract the bills that are actually CHECKED (Paid)
-    const totalPaid = currentPeriodBills
-        .filter(b => b.isPaid === true)
+    // 2. Total cost of all bills in this window
+    const totalPeriodCost = currentPeriodBills.reduce((sum, b) => sum + b.amount, 0);
+
+    // 3. Amount currently paid (checked)
+    const amountPaid = currentPeriodBills
+        .filter(b => b.isPaid)
         .reduce((sum, b) => sum + b.amount, 0);
 
-    // 3. Calculate how much is left to pay (Unchecked bills)
-    const totalUnpaid = currentPeriodBills
-        .filter(b => b.isPaid === false)
-        .reduce((sum, b) => sum + b.amount, 0);
-
-    // Your "Safe to Spend" now acts like a real-time bank balance tracker
-    const safeToSpend = income - totalPaid - taxSavings;
+    // This matches your Google Sheet "Yellow Bar"
+    // It's the total income minus everything you KNOW you have to pay
+    const leftToSpend = income - totalPeriodCost - taxSavings;
     
+    // This is how much you actually have in the bank right now (Income - what you actually sent)
+    const bankBalance = income - amountPaid - taxSavings;
+
     const el = document.getElementById('remaining');
     el.innerHTML = `
-        <div style="font-size: 1.2em; color: ${safeToSpend < 0 ? "#ff5252" : "#4caf50"};">
-            Current Balance: $${safeToSpend.toFixed(2)}
+        <div style="font-size: 1.2em; color: ${leftToSpend < 0 ? "#ff5252" : "#4caf50"};">
+            Safe to Spend: $${leftToSpend.toFixed(2)}
         </div>
         <div style="font-size: 0.8em; color: #aaa; margin-top: 5px;">
-            Left to Pay: $${totalUnpaid.toFixed(2)}
+            Bank Balance: $${bankBalance.toFixed(2)}
+        </div>
+        <div style="font-size: 0.8em; color: #888;">
+            Total Period Bills: $${totalPeriodCost.toFixed(2)}
         </div>
     `;
 }
