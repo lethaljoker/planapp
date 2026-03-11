@@ -136,65 +136,80 @@ function renderApp() {
 function calculate() {
     const income = parseFloat(document.getElementById('paycheck').value) || 0;
     
+    // 1. Get all bills for the Current Period (Mar 12 - Mar 25)
     const currentPeriodBills = bills.filter(b => 
         (b.everyPaycheck || (b.dueDate >= 12 && b.dueDate <= 25)) && b.dueMonth === undefined
     );
 
     const totalPeriodCost = currentPeriodBills.reduce((sum, b) => sum + b.amount, 0);
+    const amountPaid = currentPeriodBills.filter(b => b.isPaid).reduce((sum, b) => sum + b.amount, 0);
     
-    // Math for Safe to Spend (Income - All Period Bills - What you manually typed for taxes)
-    const leftToSpend = income - totalPeriodCost - savings.currentSpringContribution;
+    // MATH:
+    // Safe to Spend = Income - All Bills - Savings Contribution
+    const safeToSpend = income - totalPeriodCost - savings.currentContribution;
+    
+    // Bank Balance = Income - What you've actually CHECKED as paid - Savings Contribution
+    const bankBalance = income - amountPaid - savings.currentContribution;
 
     const el = document.getElementById('remaining');
     el.style.display = "flex";
-    el.style.justifyContent = "space-between";
-    el.style.gap = "15px";
+    el.style.flexDirection = "column"; 
+    el.style.gap = "10px";
 
     el.innerHTML = `
-        <div style="flex: 1;">
-            <div style="font-size: 1.2em; color: ${leftToSpend < 0 ? "#ff5252" : "#4caf50"}; font-weight: bold;">
-                Safe to Spend: $${leftToSpend.toFixed(2)}
+        <div style="display: flex; justify-content: space-between; gap: 10px;">
+            <div style="flex: 1.2;">
+                <div style="font-size: 1.1em; color: ${safeToSpend < 0 ? "#ff5252" : "#4caf50"}; font-weight: bold;">
+                    Safe to Spend: $${safeToSpend.toFixed(2)}
+                </div>
+                <div style="font-size: 1.1em; color: #fff; margin-top: 5px;">
+                    Bank Balance: $${bankBalance.toFixed(2)}
+                </div>
+                <div style="font-size: 0.75em; color: #888; margin-top: 5px;">
+                    Total Bills: $${totalPeriodCost.toFixed(2)} | Paid: $${amountPaid.toFixed(2)}
+                </div>
             </div>
-            <div style="font-size: 0.8em; color: #aaa; margin-top: 5px;">Total Period Bills: $${totalPeriodCost.toFixed(2)}</div>
-        </div>
 
-        <div style="flex: 1; background: #252525; padding: 10px; border-radius: 8px; border-left: 3px solid #ff9800;">
-            <div style="font-size: 0.75em; color: #ff9800; font-weight: bold; margin-bottom: 5px;">TAX SAVINGS</div>
-            
-            <div style="display: flex; flex-direction: column; gap: 5px;">
-                <div style="font-size: 0.7em; display: flex; justify-content: space-between;">
-                    <span>Spring (May 1):</span>
-                    <span>$${savings.springSaved} / $462.99</span>
-                </div>
+            <div style="flex: 1; background: #252525; padding: 10px; border-radius: 8px; border-left: 3px solid #ff9800;">
+                <div style="font-size: 0.7em; color: #ff9800; font-weight: bold; margin-bottom: 5px;">TAX SAVINGS</div>
                 
-                <div style="display: flex; align-items: center; justify-content: space-between;">
-                    <label style="font-size: 0.7em;">Save This Check:</label>
-                    <input type="number" value="${savings.currentSpringContribution}" 
+                <div style="font-size: 0.65em; margin-bottom: 3px;">Spring: $${savings.springSaved.toFixed(2)} / $462.99</div>
+                <div style="font-size: 0.65em; margin-bottom: 8px;">Fall: $${savings.fallSaved.toFixed(2)} / $442.99</div>
+
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px;">
+                    <label style="font-size: 0.65em;">This Check:</label>
+                    <input type="number" value="${savings.currentContribution}" 
                         onchange="updateTaxContribution(this.value)"
-                        style="width: 60px; background: #333; color: #fff; border: 1px solid #555; font-size: 0.8em; text-align: right; border-radius: 4px;">
+                        style="width: 55px; background: #333; color: #fff; border: 1px solid #555; font-size: 0.75em; text-align: right;">
                 </div>
 
-                <button onclick="commitSavings()" style="background: #ff9800; border: none; color: #000; font-size: 0.7em; font-weight: bold; padding: 4px; border-radius: 4px; margin-top: 5px; cursor: pointer;">
-                    Confirm Savings (Add to Total)
+                <button onclick="commitSavings()" style="width: 100%; background: #ff9800; border: none; color: #000; font-size: 0.65em; font-weight: bold; padding: 3px; border-radius: 3px; cursor: pointer;">
+                    Confirm & Save
                 </button>
             </div>
         </div>
     `;
 }
 
-// Helper functions for the Tax Tracker
 function updateTaxContribution(val) {
-    savings.currentSpringContribution = parseFloat(val) || 0;
+    savings.currentContribution = parseFloat(val) || 0;
     saveToPhone();
     calculate();
 }
 
 function commitSavings() {
-    if(confirm(`Adding $${savings.currentSpringContribution} to your Spring Tax total. Proceed?`)) {
-        savings.springSaved += savings.currentSpringContribution;
-        saveToPhone();
-        renderApp();
+    const choice = prompt("Which fund are you adding this to? Type 'Spring' or 'Fall'").toLowerCase();
+    if (choice === 'spring') {
+        savings.springSaved += savings.currentContribution;
+    } else if (choice === 'fall') {
+        savings.fallSaved += savings.currentContribution;
+    } else {
+        alert("Invalid choice. Type 'Spring' or 'Fall'.");
+        return;
     }
+    saveToPhone();
+    renderApp();
 }
+
 
 document.addEventListener('DOMContentLoaded', renderApp);
